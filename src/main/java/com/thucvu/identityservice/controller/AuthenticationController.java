@@ -1,8 +1,11 @@
 package com.thucvu.identityservice.controller;
 
+import com.nimbusds.jose.JOSEException;
 import com.thucvu.identityservice.dto.request.AuthenticationRequest;
+import com.thucvu.identityservice.dto.request.IntrospectRequest;
 import com.thucvu.identityservice.dto.response.ApiResponse;
 import com.thucvu.identityservice.dto.response.AuthenticationResponse;
+import com.thucvu.identityservice.dto.response.IntrospectResponse;
 import com.thucvu.identityservice.service.AuthenticationService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +14,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.text.ParseException;
 
 @RequiredArgsConstructor
 @RestController
@@ -21,12 +26,17 @@ public class AuthenticationController {
 
     @PostMapping("/log-in")
     ApiResponse<AuthenticationResponse> login(@RequestBody AuthenticationRequest authenticationRequest) {
-        boolean result = authenticationService.authenticate(authenticationRequest);
+        var result = authenticationService.authenticate(authenticationRequest);
         return ApiResponse.<AuthenticationResponse>builder()
-                .result(AuthenticationResponse
-                        .builder()
-                        .authenticated(result)
-                        .build())
+                .result(result)
+                .build();
+    }
+
+    @PostMapping("/introspect")
+    ApiResponse<IntrospectResponse> login(@RequestBody IntrospectRequest introspectRequest) throws ParseException, JOSEException {
+        var result = authenticationService.introspect(introspectRequest);
+        return ApiResponse.<IntrospectResponse>builder()
+                .result(result)
                 .build();
     }
 
