@@ -5,6 +5,10 @@ import com.thucvu.identityservice.dto.request.UserUpdateRequest;
 import com.thucvu.identityservice.dto.response.ApiResponse;
 import com.thucvu.identityservice.dto.response.UserResponse;
 import com.thucvu.identityservice.entity.User;
+import com.thucvu.identityservice.exception.AppException;
+import com.thucvu.identityservice.exception.ErrorCode;
+import com.thucvu.identityservice.mapper.UserMapper;
+import com.thucvu.identityservice.repository.UserRepository;
 import com.thucvu.identityservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -24,6 +28,8 @@ import java.util.List;
 public class UserController {
 
     UserService userService;
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
 
     @PostMapping
@@ -54,6 +60,13 @@ public class UserController {
     @PutMapping("/{userId}")
     UserResponse updateUser(@PathVariable String userId, @RequestBody UserUpdateRequest request) {
         return userService.updateUser(userId, request);
+    }
+
+    @GetMapping("/myInfo")
+    ApiResponse<UserResponse> getMyInfo() {
+        return ApiResponse.<UserResponse>builder()
+                .result(userService.getMyInfo())
+                .build();
     }
 
     @DeleteMapping("/{userId}")
