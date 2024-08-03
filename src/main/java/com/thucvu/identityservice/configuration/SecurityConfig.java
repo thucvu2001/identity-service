@@ -34,17 +34,20 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
 
         httpSecurity.authorizeRequests(request ->
-                request.requestMatchers(HttpMethod.POST, PUBLIC_URLS).permitAll()
+                        request.requestMatchers(HttpMethod.POST, PUBLIC_URLS).permitAll()
 //                        .requestMatchers(HttpMethod.GET, "/users").hasAuthority("ROLE_ADMIN") // "ROLE_" from setAuthorityPrefix
 //                        .requestMatchers(HttpMethod.GET, "/users").hasRole(Role.ADMIN.name())
-                        .anyRequest().authenticated()
+                                .anyRequest().authenticated()
         );
 
         httpSecurity.oauth2ResourceServer(oauth2 ->
                 oauth2.jwt(jwtConfigurer
-                        -> jwtConfigurer.decoder(jwtDecoder())
-                                        .jwtAuthenticationConverter(jwtAuthenticationConverter())
-                ));
+                                -> jwtConfigurer.decoder(jwtDecoder())
+                                .jwtAuthenticationConverter(jwtAuthenticationConverter())
+
+                        )
+                        .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
+        );
 
         httpSecurity.csrf(AbstractHttpConfigurer::disable);
         return httpSecurity.build();
