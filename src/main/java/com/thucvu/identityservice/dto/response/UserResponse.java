@@ -1,5 +1,6 @@
 package com.thucvu.identityservice.dto.response;
 
+import com.thucvu.identityservice.entity.Role;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -18,5 +19,5 @@ public class UserResponse {
     String firstName;
     String lastName;
     LocalDate dob;
-    Set<String> roles;
+    Set<Role> roles;
 }
