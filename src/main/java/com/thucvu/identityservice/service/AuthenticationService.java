@@ -10,8 +10,10 @@ import com.thucvu.identityservice.dto.request.AuthenticationRequest;
 import com.thucvu.identityservice.dto.request.IntrospectRequest;
 import com.thucvu.identityservice.dto.response.AuthenticationResponse;
 import com.thucvu.identityservice.dto.response.IntrospectResponse;
+import com.thucvu.identityservice.entity.Permission;
 import com.thucvu.identityservice.entity.User;
 import com.thucvu.identityservice.exception.AppException;
+import com.thucvu.identityservice.repository.RoleRepository;
 import com.thucvu.identityservice.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,7 @@ import static org.hibernate.query.sqm.tree.SqmNode.log;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthenticationService {
     UserRepository userRepository;
+    private final RoleRepository roleRepository;
 
     @NonFinal // đánh dấu là Nòninal vì cấu hình ở trên mặc định là final
     @Value("${jwt.signerKey}")
@@ -103,9 +106,17 @@ public class AuthenticationService {
 
     private String buildScope(User user) {
         StringJoiner stringJoiner = new StringJoiner(" ");
-//        if (!CollectionUtils.isEmpty(user.getRoles())) {
-//            user.getRoles().forEach(stringJoiner::add);
-//        }
+
+        if (!CollectionUtils.isEmpty(user.getRoles())) {
+            user.getRoles().forEach(role -> {
+                stringJoiner.add("ROLE_" + role.getName());
+                if (!CollectionUtils.isEmpty(role.getPermissions())) {
+                    for (Permission permission : role.getPermissions()) {
+                        stringJoiner.add(permission.getName());
+                    }
+                }
+            });
+        }
         return stringJoiner.toString();
     }
 }

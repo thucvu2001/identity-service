@@ -33,6 +33,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
 
+
+        // hasRole yêu cầu có frefix là ROLE_
+        // hasAuthority không cần có frefix là ROLE_
         httpSecurity.authorizeRequests(request ->
                         request.requestMatchers(HttpMethod.POST, PUBLIC_URLS).permitAll()
 //                        .requestMatchers(HttpMethod.GET, "/users").hasAuthority("ROLE_ADMIN") // "ROLE_" from setAuthorityPrefix
@@ -56,7 +59,7 @@ public class SecurityConfig {
     @Bean
     JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        jwtGrantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+        jwtGrantedAuthoritiesConverter.setAuthorityPrefix(""); // default is "SCOPE_"
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
         return converter;

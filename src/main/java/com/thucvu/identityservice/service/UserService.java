@@ -8,7 +8,9 @@ import com.thucvu.identityservice.enums.Role;
 import com.thucvu.identityservice.exception.AppException;
 import com.thucvu.identityservice.exception.ErrorCode;
 import com.thucvu.identityservice.mapper.UserMapper;
+import com.thucvu.identityservice.repository.RoleRepository;
 import com.thucvu.identityservice.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -29,11 +31,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
+@Transactional
 public class UserService {
 
     UserRepository userRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
 
     public UserResponse createUser(UserCreationRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
@@ -63,6 +67,9 @@ public class UserService {
     public UserResponse updateUser(String userId, UserUpdateRequest request) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         userMapper.updateUser(user, request);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        var listRole = roleRepository.findAllById(request.getRoles());
+        user.setRoles(new HashSet<>(listRole));
         return userMapper.toUserResponse(userRepository.save(user));
     }
 
@@ -70,7 +77,8 @@ public class UserService {
         userRepository.deleteById(userId);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+//    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('APPROVE_POST')")
     public List<UserResponse> getUsers() {
         log.info("in method get Users");
         return userRepository.findAll().stream().map(userMapper::toUserResponse).collect(Collectors.toList());
