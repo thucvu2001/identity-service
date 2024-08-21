@@ -42,7 +42,7 @@ public class AuthenticationService {
     UserRepository userRepository;
     private final RoleRepository roleRepository;
 
-    @NonFinal // đánh dấu là Nòninal vì cấu hình ở trên mặc định là final
+    @NonFinal //đánh dấu là NonFinal vì cấu hình ở trên mặc định là final
     @Value("${jwt.signerKey}")
     protected String SINGER_KEY;
 
