@@ -3,6 +3,7 @@ package com.thucvu.identityservice.controller;
 import com.nimbusds.jose.JOSEException;
 import com.thucvu.identityservice.dto.request.AuthenticationRequest;
 import com.thucvu.identityservice.dto.request.IntrospectRequest;
+import com.thucvu.identityservice.dto.request.LogoutRequest;
 import com.thucvu.identityservice.dto.response.ApiResponse;
 import com.thucvu.identityservice.dto.response.AuthenticationResponse;
 import com.thucvu.identityservice.dto.response.IntrospectResponse;
@@ -30,6 +31,12 @@ public class AuthenticationController {
         return ApiResponse.<AuthenticationResponse>builder()
                 .result(result)
                 .build();
+    }
+
+    @PostMapping("/logout")
+    ApiResponse<Void> logout(@RequestBody LogoutRequest request) throws ParseException, JOSEException {
+        authenticationService.logout(request);
+        return ApiResponse.<Void>builder().build();
     }
 
     @PostMapping("/introspect")
