@@ -8,11 +8,15 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.thucvu.identityservice.dto.request.AuthenticationRequest;
 import com.thucvu.identityservice.dto.request.IntrospectRequest;
+import com.thucvu.identityservice.dto.request.LogoutRequest;
 import com.thucvu.identityservice.dto.response.AuthenticationResponse;
 import com.thucvu.identityservice.dto.response.IntrospectResponse;
+import com.thucvu.identityservice.entity.InvalidatedToken;
 import com.thucvu.identityservice.entity.Permission;
 import com.thucvu.identityservice.entity.User;
 import com.thucvu.identityservice.exception.AppException;
+import com.thucvu.identityservice.exception.ErrorCode;
+import com.thucvu.identityservice.repository.InvalidatedTokenRepository;
 import com.thucvu.identityservice.repository.RoleRepository;
 import com.thucvu.identityservice.repository.UserRepository;
 import lombok.AccessLevel;
@@ -30,6 +34,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.StringJoiner;
+import java.util.UUID;
 
 import static com.thucvu.identityservice.exception.ErrorCode.UNAUTHENTICATED;
 import static com.thucvu.identityservice.exception.ErrorCode.USER_NOT_EXISTED;
@@ -40,7 +45,8 @@ import static org.hibernate.query.sqm.tree.SqmNode.log;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthenticationService {
     UserRepository userRepository;
-    private final RoleRepository roleRepository;
+    InvalidatedTokenRepository invalidatedTokenRepository;
+
 
     @NonFinal //đánh dấu là NonFinal vì cấu hình ở trên mặc định là final
     @Value("${jwt.signerKey}")
@@ -49,14 +55,14 @@ public class AuthenticationService {
 
     public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {
         var token = request.getToken();
-        JWSVerifier verifier = new MACVerifier(SINGER_KEY.getBytes());
-        SignedJWT signedJWT = SignedJWT.parse(token);
-        var verified = signedJWT.verify(verifier);
-
-        Date expiration = signedJWT.getJWTClaimsSet().getExpirationTime();
-
+        boolean isValid = true;
+        try {
+         verifyToken(token);
+        } catch (AppException e) {
+            isValid = false;
+        }
         return IntrospectResponse.builder()
-                .valid(verified && expiration.after(new Date()))
+                .valid(isValid)
                 .build();
     }
 
@@ -77,6 +83,32 @@ public class AuthenticationService {
                 .build();
     }
 
+    public void logout (LogoutRequest request) throws ParseException, JOSEException {
+        var signToken = verifyToken(request.getToken());
+        String jwtTokenId = signToken.getJWTClaimsSet().getJWTID();
+        Date expiryTime = signToken.getJWTClaimsSet().getExpirationTime();
+        InvalidatedToken invalidatedToken = InvalidatedToken
+                .builder()
+                .id(jwtTokenId)
+                .expriryTime(expiryTime)
+                .build();
+        invalidatedTokenRepository.save(invalidatedToken);
+    }
+
+    private SignedJWT verifyToken(String token) throws ParseException, JOSEException {
+        JWSVerifier verifier = new MACVerifier(SINGER_KEY.getBytes());
+        SignedJWT signedJWT = SignedJWT.parse(token);
+        var verified = signedJWT.verify(verifier);
+        Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+        if (!(verified && expiryTime.after(new Date()))) {
+            throw new AppException(UNAUTHENTICATED);
+        }
+        if (invalidatedTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID())){
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+        return signedJWT;
+    }
+
 
     // token gồm Header, Payload và Signature
     private String generateToken(User user) {
@@ -89,6 +121,7 @@ public class AuthenticationService {
                 .expirationTime(new Date(
                         Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()
                 ))
+                .jwtID(UUID.randomUUID().toString())
                 .claim("scope", buildScope(user))
                 .build();
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());

@@ -78,7 +78,6 @@ public class GlobalExceptionHandler {
             for (Map<String, Object> attribute : attributes) {
                 ErrorCode error = ErrorCode.valueOf((String) attribute.get("message"));
                 code.append(error.getCode());
-                String map = mapAttribute(error.getMessage(), attribute);
                 message.append(mapAttribute(error.getMessage(), attribute));
                 if (index != size - 1) {
                     code.append(", ");
@@ -93,7 +92,7 @@ public class GlobalExceptionHandler {
     }
 
     private String mapAttribute(String message, Map<String, Object> attributes) throws NullPointerException {
-        String result = new String(message);
+        String result = message;
         String minValue = Objects.nonNull(attributes.get(MIN_ATTRIBUTE)) ? String.valueOf(attributes.get(MIN_ATTRIBUTE)) : null;
         String maxValue = Objects.nonNull(attributes.get(MAX_ATTRIBUTE)) ? String.valueOf(attributes.get(MAX_ATTRIBUTE)) : null;
         if (maxValue != null) {
