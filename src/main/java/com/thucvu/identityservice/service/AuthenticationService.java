@@ -9,6 +9,7 @@ import com.nimbusds.jwt.SignedJWT;
 import com.thucvu.identityservice.dto.request.AuthenticationRequest;
 import com.thucvu.identityservice.dto.request.IntrospectRequest;
 import com.thucvu.identityservice.dto.request.LogoutRequest;
+import com.thucvu.identityservice.dto.request.RefreshRequest;
 import com.thucvu.identityservice.dto.response.AuthenticationResponse;
 import com.thucvu.identityservice.dto.response.IntrospectResponse;
 import com.thucvu.identityservice.entity.InvalidatedToken;
@@ -93,6 +94,31 @@ public class AuthenticationService {
                 .expriryTime(expiryTime)
                 .build();
         invalidatedTokenRepository.save(invalidatedToken);
+    }
+
+    public AuthenticationResponse refreshToken(RefreshRequest request) throws ParseException, JOSEException {
+        // Kiem tra hieu luc cua token
+        var signedJWT = verifyToken(request.getToken());
+
+        // Invalidate token cu
+        var jit = signedJWT.getJWTClaimsSet().getJWTID();
+        var expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+        InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+                .id(jit)
+                .expriryTime(expiryTime)
+                .build();
+        invalidatedTokenRepository.save(invalidatedToken);
+
+        // tao token moi
+        var username = signedJWT.getJWTClaimsSet().getSubject();
+        var user = userRepository.findByUsername(username).orElseThrow(
+                () -> new AppException(UNAUTHENTICATED)
+        );
+        var token = generateToken(user);
+        return AuthenticationResponse.builder()
+                .token(token)
+                .authenticated(true)
+                .build();
     }
 
     private SignedJWT verifyToken(String token) throws ParseException, JOSEException {

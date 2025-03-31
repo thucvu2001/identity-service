@@ -4,6 +4,7 @@ import com.nimbusds.jose.JOSEException;
 import com.thucvu.identityservice.dto.request.AuthenticationRequest;
 import com.thucvu.identityservice.dto.request.IntrospectRequest;
 import com.thucvu.identityservice.dto.request.LogoutRequest;
+import com.thucvu.identityservice.dto.request.RefreshRequest;
 import com.thucvu.identityservice.dto.response.ApiResponse;
 import com.thucvu.identityservice.dto.response.AuthenticationResponse;
 import com.thucvu.identityservice.dto.response.IntrospectResponse;
@@ -43,6 +44,14 @@ public class AuthenticationController {
     ApiResponse<IntrospectResponse> introspect(@RequestBody IntrospectRequest introspectRequest) throws ParseException, JOSEException {
         var result = authenticationService.introspect(introspectRequest);
         return ApiResponse.<IntrospectResponse>builder()
+                .result(result)
+                .build();
+    }
+
+    @PostMapping("/refresh")
+    ApiResponse<AuthenticationResponse> authenticate(@RequestBody RefreshRequest refreshRequest) throws ParseException, JOSEException {
+        var result = authenticationService.refreshToken(refreshRequest);
+        return ApiResponse.<AuthenticationResponse>builder()
                 .result(result)
                 .build();
     }

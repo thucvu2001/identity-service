@@ -27,7 +27,7 @@ import javax.crypto.spec.SecretKeySpec;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final String[] PUBLIC_URLS = {"/users", "/auth/token", "/auth/introspect", "/auth/login", "/auth/logout"};
+    private final String[] PUBLIC_URLS = {"/users", "/auth/token", "/auth/introspect", "/auth/login", "/auth/logout", "/auth/refresh"};
 
     private final CustomJwtDecoder customJwtDecoder;
 
